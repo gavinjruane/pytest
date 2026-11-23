@@ -1,13 +1,37 @@
+use std::collections::HashMap;
 use std::vec::Vec;
+
+pub type Store = Vec<Value>;
+
+pub type Environment = HashMap<String, u32>;
+
+pub fn new_environment(items: &Vec<String>) -> Environment {
+    let mut environment: Environment = HashMap::new();
+    for (index, item) in items.into_iter().enumerate() {
+        let loc: u32 = u32::try_from(index).expect("error: location is too large");
+        environment.insert(String::from(item), loc);
+    }
+    environment
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Num(u32),
     Str(String),
     Id(String),
-    Cond(CondC),
-    Func(FuncC),
-    Appl(ApplC),
+    Cond {
+        cond: Box<Expr>,
+        if_true: Box<Expr>,
+        if_false: Box<Expr>,
+    },
+    Func {
+        parameters: Vec<String>,
+        body: Box<Expr>,
+    },
+    Appl {
+        expr: Box<Expr>,
+        arguments: Vec<Expr>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -16,43 +40,10 @@ pub enum Value {
     Str(String),
     Bool(bool),
     StdCall(String),
-    Closure(ClosureV),
+    Closure {
+        parameters: Vec<String>,
+        body: Box<Expr>,
+    },
     None,
     Undefined,
-}
-
-pub type ExprBox = Box<Expr>;
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct CondC {
-    cond: ExprBox,
-    if_true: ExprBox,
-    if_false: ExprBox,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct FuncC {
-    parameters: Vec<String>,
-    body: ExprBox,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ApplC {
-    expr: ExprBox,
-    arguments: Vec<Expr>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ClosureV {
-    parameters: Vec<String>,
-    body: ExprBox,
-}
-
-impl ClosureV {
-    pub fn new(func: &FuncC) -> Self {
-        ClosureV {
-            parameters: func.parameters.clone(),
-            body: func.body.clone(),
-        }
-    }
 }
